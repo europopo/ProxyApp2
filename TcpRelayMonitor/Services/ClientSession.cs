@@ -1,3 +1,4 @@
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using TcpRelayMonitor.Models;
@@ -34,28 +35,47 @@ public sealed class ClientSession : IAsyncDisposable
     public PlcClientInfo Info { get; }
 
     /// <summary>
-    /// 启动转发循环。
+    /// 启动转发循环：PLC -> 目标服务端，再将目标返回数据回写PLC。
     /// </summary>
     public async Task RunAsync(CancellationToken token)
     {
-        var readStream = _plcClient.GetStream();
-        var writeStream = _forwardClient.GetStream();
-        var buffer = new byte[8192];
+        var plcStream = _plcClient.GetStream();
+        var forwardStream = _forwardClient.GetStream();
+        var plcBuffer = new byte[8192];
+        var responseBuffer = new byte[8192];
 
         while (!token.IsCancellationRequested)
         {
-            var read = await readStream.ReadAsync(buffer, token).ConfigureAwait(false);
+            var read = await plcStream.ReadAsync(plcBuffer, token).ConfigureAwait(false);
             if (read == 0)
             {
                 break;
             }
 
             Info.ReceivedBytes += read;
-            _logService.Info($"[{Info.SessionId}] 接收 {read} 字节");
+            _logService.Info($"[{Info.SessionId}] PLC接收 {read} 字节");
 
-            await _forwardService.SendAsync(writeStream, buffer, read, token).ConfigureAwait(false);
-            Info.SentBytes += read;
-            _logService.Info($"[{Info.SessionId}] 转发成功，发送 {read} 字节");
+            try
+            {
+                await _forwardService.SendAsync(forwardStream, plcBuffer, read, token).ConfigureAwait(false);
+                _logService.Info($"[{Info.SessionId}] 转发到目标成功，发送 {read} 字节");
+            }
+            catch (IOException ex) when (ex.InnerException is SocketException socketEx && socketEx.SocketErrorCode == SocketError.ConnectionReset)
+            {
+                _logService.Info($"[{Info.SessionId}] 目标连接已关闭（10054），会话结束");
+                break;
+            }
+
+            var responseRead = await forwardStream.ReadAsync(responseBuffer, token).ConfigureAwait(false);
+            if (responseRead == 0)
+            {
+                _logService.Info($"[{Info.SessionId}] 目标服务端主动断开");
+                break;
+            }
+
+            await plcStream.WriteAsync(responseBuffer.AsMemory(0, responseRead), token).ConfigureAwait(false);
+            Info.SentBytes += responseRead;
+            _logService.Info($"[{Info.SessionId}] 回写PLC成功，发送 {responseRead} 字节");
         }
     }
 

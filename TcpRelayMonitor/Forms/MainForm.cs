@@ -67,6 +67,10 @@ public partial class MainForm : AntdUI.Window
 
     private void btnClearLog_Click(object sender, EventArgs e) => rtbLog.Clear();
 
+    private void btnMinimize_Click(object? sender, EventArgs e) => WindowState = FormWindowState.Minimized;
+
+    private void btnClose_Click(object? sender, EventArgs e) => Close();
+
     private void FlushLogs()
     {
         var batch = _viewModel.DrainLogs();

@@ -4,6 +4,7 @@ partial class MainForm
 {
     private System.ComponentModel.IContainer components = null;
     private AntdUI.PageHeader header = null!;
+    private AntdUI.Panel panelConfig = null!;
     private AntdUI.Label lblListenIp = null!;
     private AntdUI.Label lblListenPort = null!;
     private AntdUI.Label lblForwardIp = null!;
@@ -15,6 +16,8 @@ partial class MainForm
     private AntdUI.Button btnStart = null!;
     private AntdUI.Button btnStop = null!;
     private AntdUI.Button btnClearLog = null!;
+    private AntdUI.Button btnMinimize = null!;
+    private AntdUI.Button btnClose = null!;
     private TabControl tabMain = null!;
     private TabPage tabClients = null!;
     private TabPage tabLogs = null!;
@@ -30,42 +33,48 @@ partial class MainForm
     private void InitializeComponent()
     {
         components = new System.ComponentModel.Container();
-        header = new AntdUI.PageHeader { Text = "TCP中继监听器", Location = new Point(12, 8), Size = new Size(980, 40) };
+        header = new AntdUI.PageHeader { Text = "TcpRelayMonitor", Description = "Element风格中继监听控制台", Location = new Point(12, 8), Size = new Size(760, 44) };
+        btnMinimize = new AntdUI.Button { Text = "最小化", Type = AntdUI.TTypeMini.Info, Location = new Point(780, 14), Size = new Size(90, 30) };
+        btnClose = new AntdUI.Button { Text = "关闭", Type = AntdUI.TTypeMini.Error, Location = new Point(880, 14), Size = new Size(90, 30) };
 
-        lblListenIp = new AntdUI.Label { Text = "监听IP", Location = new Point(20, 62), Size = new Size(70, 24) };
-        txtListenIp = new AntdUI.Input { Location = new Point(90, 58), Size = new Size(150, 30) };
+        panelConfig = new AntdUI.Panel { Location = new Point(20, 60), Size = new Size(950, 90), Radius = 8 };
+        lblListenIp = new AntdUI.Label { Text = "监听IP", Location = new Point(16, 14), Size = new Size(60, 24) };
+        txtListenIp = new AntdUI.Input { Location = new Point(78, 10), Size = new Size(160, 30), PlaceholderText = "0.0.0.0" };
+        lblListenPort = new AntdUI.Label { Text = "监听端口", Location = new Point(250, 14), Size = new Size(80, 24) };
+        txtListenPort = new AntdUI.Input { Location = new Point(325, 10), Size = new Size(100, 30), PlaceholderText = "5000" };
+        lblForwardIp = new AntdUI.Label { Text = "转发IP", Location = new Point(440, 14), Size = new Size(70, 24) };
+        txtForwardIp = new AntdUI.Input { Location = new Point(500, 10), Size = new Size(160, 30), PlaceholderText = "127.0.0.1" };
+        lblForwardPort = new AntdUI.Label { Text = "转发端口", Location = new Point(675, 14), Size = new Size(80, 24) };
+        txtForwardPort = new AntdUI.Input { Location = new Point(750, 10), Size = new Size(100, 30), PlaceholderText = "6000" };
 
-        lblListenPort = new AntdUI.Label { Text = "监听端口", Location = new Point(250, 62), Size = new Size(80, 24) };
-        txtListenPort = new AntdUI.Input { Location = new Point(325, 58), Size = new Size(100, 30) };
+        btnStart = new AntdUI.Button { Text = "启动监听", Type = AntdUI.TTypeMini.Success, Location = new Point(16, 48), Size = new Size(110, 32) };
+        btnStop = new AntdUI.Button { Text = "停止监听", Type = AntdUI.TTypeMini.Warn, Location = new Point(134, 48), Size = new Size(110, 32) };
+        btnClearLog = new AntdUI.Button { Text = "清空日志", Location = new Point(252, 48), Size = new Size(110, 32) };
 
-        lblForwardIp = new AntdUI.Label { Text = "转发IP", Location = new Point(440, 62), Size = new Size(70, 24) };
-        txtForwardIp = new AntdUI.Input { Location = new Point(505, 58), Size = new Size(150, 30) };
-
-        lblForwardPort = new AntdUI.Label { Text = "转发端口", Location = new Point(665, 62), Size = new Size(80, 24) };
-        txtForwardPort = new AntdUI.Input { Location = new Point(740, 58), Size = new Size(100, 30) };
-
-        btnStart = new AntdUI.Button { Text = "启动监听", Type = AntdUI.TTypeMini.Success, Location = new Point(20, 98), Size = new Size(100, 32) };
-        btnStop = new AntdUI.Button { Text = "停止监听", Type = AntdUI.TTypeMini.Error, Location = new Point(130, 98), Size = new Size(100, 32) };
-        btnClearLog = new AntdUI.Button { Text = "清空日志", Location = new Point(240, 98), Size = new Size(100, 32) };
-
-        tabMain = new TabControl { Location = new Point(20, 140), Size = new Size(960, 470) };
+        tabMain = new TabControl { Location = new Point(20, 162), Size = new Size(950, 450) };
         tabClients = new TabPage { Text = "PLC连接" };
         tabLogs = new TabPage { Text = "运行日志" };
 
-        dgvClients = new DataGridView
-        {
-            Dock = DockStyle.Fill,
-            ReadOnly = true,
-            AutoGenerateColumns = true,
-            AllowUserToAddRows = false,
-            AllowUserToDeleteRows = false
-        };
-
+        dgvClients = new DataGridView { Dock = DockStyle.Fill, ReadOnly = true, AutoGenerateColumns = true, AllowUserToAddRows = false, AllowUserToDeleteRows = false };
         rtbLog = new RichTextBox { Dock = DockStyle.Fill, ReadOnly = true, Font = new Font("Consolas", 10F) };
 
         btnStart.Click += btnStart_Click;
         btnStop.Click += btnStop_Click;
         btnClearLog.Click += btnClearLog_Click;
+        btnMinimize.Click += btnMinimize_Click;
+        btnClose.Click += btnClose_Click;
+
+        panelConfig.Controls.Add(lblListenIp);
+        panelConfig.Controls.Add(txtListenIp);
+        panelConfig.Controls.Add(lblListenPort);
+        panelConfig.Controls.Add(txtListenPort);
+        panelConfig.Controls.Add(lblForwardIp);
+        panelConfig.Controls.Add(txtForwardIp);
+        panelConfig.Controls.Add(lblForwardPort);
+        panelConfig.Controls.Add(txtForwardPort);
+        panelConfig.Controls.Add(btnStart);
+        panelConfig.Controls.Add(btnStop);
+        panelConfig.Controls.Add(btnClearLog);
 
         tabClients.Controls.Add(dgvClients);
         tabLogs.Controls.Add(rtbLog);
@@ -73,17 +82,9 @@ partial class MainForm
         tabMain.TabPages.Add(tabLogs);
 
         Controls.Add(header);
-        Controls.Add(lblListenIp);
-        Controls.Add(txtListenIp);
-        Controls.Add(lblListenPort);
-        Controls.Add(txtListenPort);
-        Controls.Add(lblForwardIp);
-        Controls.Add(txtForwardIp);
-        Controls.Add(lblForwardPort);
-        Controls.Add(txtForwardPort);
-        Controls.Add(btnStart);
-        Controls.Add(btnStop);
-        Controls.Add(btnClearLog);
+        Controls.Add(btnMinimize);
+        Controls.Add(btnClose);
+        Controls.Add(panelConfig);
         Controls.Add(tabMain);
 
         Text = "TcpRelayMonitor";
