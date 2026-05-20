@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using TcpRelayMonitor.Config;
 using TcpRelayMonitor.Models;
@@ -7,7 +6,7 @@ using TcpRelayMonitor.Services;
 namespace TcpRelayMonitor.ViewModels;
 
 /// <summary>
-/// 主界面视图模型。
+/// 主界面视图模型，负责配置、服务调用与事件转发。
 /// </summary>
 public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 {
@@ -22,20 +21,17 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _logService = new LogService();
         _forwardService = new TcpForwardService(_logService);
         _relayService = new TcpRelayService(_logService, _forwardService);
-        _relayService.OnClientConnected += info => Clients.Add(info);
-        _relayService.OnClientDisconnected += sessionId =>
-        {
-            var item = Clients.FirstOrDefault(x => x.SessionId == sessionId);
-            if (item is not null)
-            {
-                item.Status = "已断开";
-            }
-        };
+        _relayService.OnClientConnected += info => ClientConnected?.Invoke(info);
+        _relayService.OnClientDisconnected += sessionId => ClientDisconnected?.Invoke(sessionId);
     }
 
+    /// <summary>客户端接入事件。</summary>
+    public event Action<PlcClientInfo>? ClientConnected;
+
+    /// <summary>客户端断开事件。</summary>
+    public event Action<string>? ClientDisconnected;
+
     public AppConfig Config { get; }
-    public BindingList<PlcClientInfo> Clients { get; } = new();
-    public ObservableCollection<LogItem> Logs { get; } = new();
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public async Task StartAsync()
@@ -53,8 +49,6 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     }
 
     public List<LogItem> DrainLogs() => _logService.Drain();
-
-    public void ClearLogs() => Logs.Clear();
 
     public void Dispose()
     {

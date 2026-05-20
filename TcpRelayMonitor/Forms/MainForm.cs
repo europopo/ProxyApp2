@@ -1,5 +1,7 @@
+using System.ComponentModel;
 using System.Text;
 using TcpRelayMonitor.Helpers;
+using TcpRelayMonitor.Models;
 using TcpRelayMonitor.ViewModels;
 
 namespace TcpRelayMonitor.Forms;
@@ -10,6 +12,7 @@ namespace TcpRelayMonitor.Forms;
 public partial class MainForm : AntdUI.Window
 {
     private readonly MainViewModel _viewModel;
+    private readonly BindingList<PlcClientInfo> _clients = new();
     private readonly System.Windows.Forms.Timer _logTimer;
     private readonly NotifyIcon _notifyIcon;
 
@@ -18,6 +21,7 @@ public partial class MainForm : AntdUI.Window
         InitializeComponent();
         _viewModel = new MainViewModel();
         BindData();
+        BindEvents();
 
         _logTimer = new System.Windows.Forms.Timer { Interval = 200 };
         _logTimer.Tick += (_, _) => FlushLogs();
@@ -41,18 +45,27 @@ public partial class MainForm : AntdUI.Window
         txtListenPort.DataBindings.Add("Text", _viewModel.Config, nameof(_viewModel.Config.ListenPort));
         txtForwardIp.DataBindings.Add("Text", _viewModel.Config, nameof(_viewModel.Config.ForwardIp));
         txtForwardPort.DataBindings.Add("Text", _viewModel.Config, nameof(_viewModel.Config.ForwardPort));
-        dgvClients.DataSource = _viewModel.Clients;
+        dgvClients.DataSource = _clients;
+    }
+
+    private void BindEvents()
+    {
+        _viewModel.ClientConnected += info => UIInvokeHelper.SafeInvoke(this, () => _clients.Add(info));
+        _viewModel.ClientDisconnected += sessionId => UIInvokeHelper.SafeInvoke(this, () =>
+        {
+            var client = _clients.FirstOrDefault(x => x.SessionId == sessionId);
+            if (client is not null)
+            {
+                client.Status = "已断开";
+            }
+        });
     }
 
     private async void btnStart_Click(object sender, EventArgs e) => await _viewModel.StartAsync();
 
     private async void btnStop_Click(object sender, EventArgs e) => await _viewModel.StopAsync();
 
-    private void btnClearLog_Click(object sender, EventArgs e)
-    {
-        _viewModel.ClearLogs();
-        rtbLog.Clear();
-    }
+    private void btnClearLog_Click(object sender, EventArgs e) => rtbLog.Clear();
 
     private void FlushLogs()
     {
@@ -73,8 +86,7 @@ public partial class MainForm : AntdUI.Window
             rtbLog.AppendText(sb.ToString());
             while (rtbLog.Lines.Length > _viewModel.Config.MaxLogCount)
             {
-                var lines = rtbLog.Lines.Skip(1).ToArray();
-                rtbLog.Lines = lines;
+                rtbLog.Lines = rtbLog.Lines.Skip(1).ToArray();
             }
 
             rtbLog.SelectionStart = rtbLog.TextLength;
@@ -87,7 +99,7 @@ public partial class MainForm : AntdUI.Window
         if (WindowState == FormWindowState.Minimized)
         {
             Hide();
-            _notifyIcon.ShowBalloonTip(1500, "TcpRelayMonitor", "程序已最小化到托盘", ToolTipIcon.Info);
+            _notifyIcon.ShowBalloonTip(1000, "TcpRelayMonitor", "程序已最小化到托盘", ToolTipIcon.Info);
         }
     }
 
