@@ -45,12 +45,17 @@ public partial class MainForm : AntdUI.Window
         txtListenPort.DataBindings.Add("Text", _viewModel.Config, nameof(_viewModel.Config.ListenPort));
         txtForwardIp.DataBindings.Add("Text", _viewModel.Config, nameof(_viewModel.Config.ForwardIp));
         txtForwardPort.DataBindings.Add("Text", _viewModel.Config, nameof(_viewModel.Config.ForwardPort));
-        dgvClients.DataSource = _clients;
+        RefreshClientTable();
     }
 
     private void BindEvents()
     {
-        _viewModel.ClientConnected += info => UIInvokeHelper.SafeInvoke(this, () => _clients.Add(info));
+        _viewModel.ClientConnected += info => UIInvokeHelper.SafeInvoke(this, () =>
+        {
+            _clients.Add(info);
+            RefreshClientTable();
+        });
+
         _viewModel.ClientDisconnected += sessionId => UIInvokeHelper.SafeInvoke(this, () =>
         {
             var client = _clients.FirstOrDefault(x => x.SessionId == sessionId);
@@ -58,18 +63,52 @@ public partial class MainForm : AntdUI.Window
             {
                 client.Status = "已断开";
             }
+
+            RefreshClientTable();
         });
     }
 
-    private async void btnStart_Click(object sender, EventArgs e) => await _viewModel.StartAsync();
+    private async void btnStart_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            await _viewModel.StartAsync();
+            lblListenStatus.Text = "监听状态：监听中";
+            lblListenStatus.ForeColor = Color.SeaGreen;
+        }
+        catch (Exception ex)
+        {
+            lblListenStatus.Text = "监听状态：错误";
+            lblListenStatus.ForeColor = Color.Firebrick;
+            rtbLog.AppendText($"启动失败: {ex.Message}{Environment.NewLine}");
+        }
+    }
 
-    private async void btnStop_Click(object sender, EventArgs e) => await _viewModel.StopAsync();
+    private async void btnStop_Click(object sender, EventArgs e)
+    {
+        await _viewModel.StopAsync();
+        lblListenStatus.Text = "监听状态：未监听";
+        lblListenStatus.ForeColor = Color.Gray;
+    }
 
     private void btnClearLog_Click(object sender, EventArgs e) => rtbLog.Clear();
 
     private void btnMinimize_Click(object? sender, EventArgs e) => WindowState = FormWindowState.Minimized;
 
     private void btnClose_Click(object? sender, EventArgs e) => Close();
+
+    private void RefreshClientTable()
+    {
+        tableClients.DataSource = _clients.Select(x => new
+        {
+            PLC_IP = x.PlcIp,
+            PLC_Port = x.PlcPort,
+            连接时间 = x.ConnectedAt,
+            接收字节 = x.ReceivedBytes,
+            发送字节 = x.SentBytes,
+            状态 = x.Status
+        }).ToList();
+    }
 
     private void FlushLogs()
     {

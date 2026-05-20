@@ -21,7 +21,8 @@ partial class MainForm
     private TabControl tabMain = null!;
     private TabPage tabClients = null!;
     private TabPage tabLogs = null!;
-    private DataGridView dgvClients = null!;
+    private AntdUI.Table tableClients = null!;
+    private AntdUI.Label lblListenStatus = null!;
     private RichTextBox rtbLog = null!;
 
     protected override void Dispose(bool disposing)
@@ -47,16 +48,18 @@ partial class MainForm
         lblForwardPort = new AntdUI.Label { Text = "转发端口", Location = new Point(675, 14), Size = new Size(80, 24) };
         txtForwardPort = new AntdUI.Input { Location = new Point(750, 10), Size = new Size(100, 30), PlaceholderText = "6000" };
 
-        btnStart = new AntdUI.Button { Text = "启动监听", Type = AntdUI.TTypeMini.Success, Location = new Point(16, 48), Size = new Size(110, 32) };
-        btnStop = new AntdUI.Button { Text = "停止监听", Type = AntdUI.TTypeMini.Warn, Location = new Point(134, 48), Size = new Size(110, 32) };
-        btnClearLog = new AntdUI.Button { Text = "清空日志", Location = new Point(252, 48), Size = new Size(110, 32) };
+        btnStart = new AntdUI.Button { Text = "启动监听", Type = AntdUI.TTypeMini.Success, Location = new Point(16, 48), Size = new Size(130, 38), Font = new Font("Microsoft YaHei UI", 10F, FontStyle.Bold) };
+        btnStop = new AntdUI.Button { Text = "停止监听", Type = AntdUI.TTypeMini.Warn, Location = new Point(152, 48), Size = new Size(130, 38), Font = new Font("Microsoft YaHei UI", 10F, FontStyle.Bold) };
+        btnClearLog = new AntdUI.Button { Text = "清空日志", Location = new Point(288, 48), Size = new Size(130, 38), Font = new Font("Microsoft YaHei UI", 10F, FontStyle.Bold) };
 
         tabMain = new TabControl { Location = new Point(20, 162), Size = new Size(950, 450) };
         tabClients = new TabPage { Text = "PLC连接" };
         tabLogs = new TabPage { Text = "运行日志" };
 
-        dgvClients = new DataGridView { Dock = DockStyle.Fill, ReadOnly = true, AutoGenerateColumns = true, AllowUserToAddRows = false, AllowUserToDeleteRows = false };
-        rtbLog = new RichTextBox { Dock = DockStyle.Fill, ReadOnly = true, Font = new Font("Consolas", 10F) };
+        lblListenStatus = new AntdUI.Label { Text = "监听状态：未监听", ForeColor = Color.Gray, Location = new Point(380, 53), Size = new Size(260, 28), Font = new Font("Microsoft YaHei UI", 11F, FontStyle.Bold) };
+
+        tableClients = new AntdUI.Table { Dock = DockStyle.Fill, Font = new Font("Microsoft YaHei UI", 10F) };
+        rtbLog = new RichTextBox { Dock = DockStyle.Fill, ReadOnly = true, Font = new Font("Consolas", 11F) };
 
         btnStart.Click += btnStart_Click;
         btnStop.Click += btnStop_Click;
@@ -76,7 +79,7 @@ partial class MainForm
         panelConfig.Controls.Add(btnStop);
         panelConfig.Controls.Add(btnClearLog);
 
-        tabClients.Controls.Add(dgvClients);
+        tabClients.Controls.Add(tableClients);
         tabLogs.Controls.Add(rtbLog);
         tabMain.TabPages.Add(tabClients);
         tabMain.TabPages.Add(tabLogs);
@@ -85,6 +88,7 @@ partial class MainForm
         Controls.Add(btnMinimize);
         Controls.Add(btnClose);
         Controls.Add(panelConfig);
+        Controls.Add(lblListenStatus);
         Controls.Add(tabMain);
 
         Text = "TcpRelayMonitor";
