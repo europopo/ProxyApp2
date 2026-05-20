@@ -46,6 +46,7 @@ public partial class MainForm : AntdUI.Window
         txtForwardIp.DataBindings.Add("Text", _viewModel.Config, nameof(_viewModel.Config.ForwardIp));
         txtForwardPort.DataBindings.Add("Text", _viewModel.Config, nameof(_viewModel.Config.ForwardPort));
         RefreshClientTable();
+        SetListenStatus("未监听", Color.Gray);
     }
 
     private void BindEvents()
@@ -73,13 +74,11 @@ public partial class MainForm : AntdUI.Window
         try
         {
             await _viewModel.StartAsync();
-            lblListenStatus.Text = "监听状态：监听中";
-            lblListenStatus.ForeColor = Color.SeaGreen;
+            SetListenStatus("监听中", Color.SeaGreen);
         }
         catch (Exception ex)
         {
-            lblListenStatus.Text = "监听状态：错误";
-            lblListenStatus.ForeColor = Color.Firebrick;
+            SetListenStatus("错误", Color.Firebrick);
             rtbLog.AppendText($"启动失败: {ex.Message}{Environment.NewLine}");
         }
     }
@@ -87,8 +86,7 @@ public partial class MainForm : AntdUI.Window
     private async void btnStop_Click(object sender, EventArgs e)
     {
         await _viewModel.StopAsync();
-        lblListenStatus.Text = "监听状态：未监听";
-        lblListenStatus.ForeColor = Color.Gray;
+        SetListenStatus("未监听", Color.Gray);
     }
 
     private void btnClearLog_Click(object sender, EventArgs e) => rtbLog.Clear();
@@ -96,6 +94,12 @@ public partial class MainForm : AntdUI.Window
     private void btnMinimize_Click(object? sender, EventArgs e) => WindowState = FormWindowState.Minimized;
 
     private void btnClose_Click(object? sender, EventArgs e) => Close();
+
+    private void SetListenStatus(string status, Color color)
+    {
+        lblListenStatus.Text = status;
+        lblListenStatus.ForeColor = color;
+    }
 
     private void RefreshClientTable()
     {
